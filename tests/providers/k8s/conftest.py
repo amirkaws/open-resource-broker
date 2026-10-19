@@ -36,6 +36,31 @@ def _clear_shared_kube_clients():
 
 
 @pytest.fixture(autouse=True)
+def _reset_k8s_default_configuration():
+    """Clear the kubernetes client's process-global default ``Configuration``.
+
+    ``Configuration._default`` is class-level state that ORB's auth layer sets
+    (``auth/in_cluster.py``, ``auth/kubeconfig.py`` both call
+    ``Configuration.set_default``).  Once it is populated,
+    ``Configuration.get_default_copy`` switches from constructing a fresh
+    config to ``copy.deepcopy(cls._default)`` — and every k8s SDK model
+    constructor calls ``get_default_copy``.  Tests asserting that a read-only
+    code path performs no deepcopy therefore pass or fail based on whether an
+    earlier test in the same xdist worker happened to set a default, which is
+    nondeterministic under ``-n auto``.  Reset per test, restore on teardown.
+    """
+    from kubernetes.client import Configuration  # type: ignore[reportAttributeAccessIssue]
+
+    # Assign the attribute directly rather than via ``set_default``, which
+    # deep-copies its argument — teardown must restore the *same* object a
+    # caller outside this tree may still hold a reference to.
+    saved = getattr(Configuration, "_default", None)
+    Configuration._default = None
+    yield
+    Configuration._default = saved
+
+
+@pytest.fixture(autouse=True)
 def _register_k8s_retry_classifier():
     """Register K8sRetryClassifier for each k8s test (mirrors provider bootstrap)."""
     from orb.infrastructure.resilience.retry_classifier_registry import (
