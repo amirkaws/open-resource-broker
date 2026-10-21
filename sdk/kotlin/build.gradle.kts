@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -60,18 +61,30 @@ dependencies {
     // Test
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("io.mockk:mockk:1.13.11")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
+
+    // JUnit versions come from the BOM, and junit-platform-launcher is declared
+    // explicitly rather than left to Gradle's bundled copy: from JUnit 6 onwards
+    // the engine will not load against the launcher Gradle injects by default,
+    // which fails at test-discovery time ("TestEngine with ID 'junit-jupiter'
+    // failed to discover tests"). Declaring it keeps a JUnit major bump buildable.
+    testImplementation(platform("org.junit:junit-bom:5.10.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // ---------------------------------------------------------------------------
 // Compile settings
 // ---------------------------------------------------------------------------
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs = listOf("-Xjsr305=strict")
+// `compilerOptions` (not the older `kotlinOptions`) is the forward-compatible
+// DSL: KGP 2.x annotates KotlinJvmOptions with @Deprecated(level = ERROR), so a
+// `kotlinOptions` block stops the build script from compiling at CONFIGURATION
+// time — before any task runs — the moment the Kotlin plugin crosses 2.0.
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+        freeCompilerArgs.add("-Xjsr305=strict")
     }
 }
 

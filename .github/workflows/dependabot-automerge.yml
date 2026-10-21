@@ -68,17 +68,39 @@ jobs:
 
           # dependabot/fetch-metadata needs a pull_request-triggered run to
           # expose its outputs, but this job runs on workflow_run instead.
-          # Grouped Dependabot branches are named after their group (see
+          # Grouped Dependabot branches are named <ecosystem>/<group> (see
           # .github/dependabot.yml), e.g. dependabot/uv/python-minor-patch-<hash>.
-          # Only the *-minor-patch groups are eligible for auto-merge; the
-          # *-major groups and the all-update-types groups (github-actions-all,
-          # go-all, docker-all) still require a human review before merging.
-          if [[ "$HEAD_BRANCH" == *-minor-patch-* ]]; then
-            echo "ok=true" >> "$GITHUB_OUTPUT"
-          else
+          #
+          # Two independent gates, both required:
+          #   1. The group must be *-minor-patch (never *-major).
+          #   2. The ecosystem must be on the allowlist below.
+          #
+          # Gate 2 is explicit rather than implied by group naming: every
+          # ecosystem now has a *-minor-patch group so that majors can be
+          # reviewed separately, but that reviewability change must not by
+          # itself widen what merges unattended. Workflow-file bumps
+          # (github_actions) and the JVM/.NET/Go SDK dependency trees stay
+          # human-reviewed. To opt an ecosystem in, add its prefix here.
+          ALLOWED_ECOSYSTEMS=(
+            "dependabot/uv/"
+            "dependabot/npm_and_yarn/"
+          )
+
+          if [[ "$HEAD_BRANCH" != *-minor-patch-* ]]; then
             echo "Branch $HEAD_BRANCH is not a minor/patch update group; skipping."
             echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          for prefix in "${ALLOWED_ECOSYSTEMS[@]}"; do
+            if [[ "$HEAD_BRANCH" == "$prefix"* ]]; then
+              echo "ok=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "Ecosystem for $HEAD_BRANCH is not auto-merge eligible; skipping."
+          echo "ok=false" >> "$GITHUB_OUTPUT"
 
       - name: Verify all checks are green
         id: checks

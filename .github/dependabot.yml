@@ -58,15 +58,19 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 2
     groups:
-      github-actions-all:
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-major:
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # Go dependencies (SDK)
   - package-ecosystem: "gomod"
@@ -82,15 +86,19 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 2
     groups:
-      go-all:
+      go-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      go-major:
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # Docker dependencies
   - package-ecosystem: "docker"
@@ -134,15 +142,24 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 2
+
+    # Split minor/patch from major, matching the uv and npm ecosystems above.
+    # A single all-update-types group meant one breaking major (Kotlin 1.9→2.x,
+    # OkHttp 4→5, JUnit 5→6) blocked a dozen harmless bumps in the same PR, and
+    # the *-minor-patch- branch name is what dependabot-automerge.yml matches.
     groups:
-      java-all:
+      java-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      java-major:
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # Kotlin SDK dependencies (Gradle)
   - package-ecosystem: "gradle"
@@ -158,15 +175,19 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 2
     groups:
-      kotlin-all:
+      kotlin-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      kotlin-major:
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # C# SDK dependencies (NuGet)
   - package-ecosystem: "nuget"
@@ -186,15 +207,19 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 2
     groups:
-      csharp-all:
+      csharp-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      csharp-major:
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # TypeScript SDK dependencies
   - package-ecosystem: "npm"

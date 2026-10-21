@@ -256,9 +256,6 @@ jobs:
             check-drift-target: sdk-java-check-drift
             needs-orb: true
             orb-env-var: ORB_BINARY
-            # Matches sdk/java/gradle/wrapper/gradle-wrapper.properties.
-            gradle-version: '8.7'
-            gradle-distribution-type: bin
 
           - lang: kotlin
             display-name: Kotlin
@@ -266,9 +263,6 @@ jobs:
             check-drift-target: sdk-kotlin-check-drift
             needs-orb: true
             orb-env-var: ORB_BINARY
-            # Matches sdk/kotlin/gradle/wrapper/gradle-wrapper.properties.
-            gradle-version: '8.14.3'
-            gradle-distribution-type: all
 
           - lang: dotnet
             display-name: .NET
@@ -315,13 +309,39 @@ jobs:
           # Only used once to regenerate the wrapper launcher; no build to cache.
           cache-disabled: true
 
+      # The target version is read from the committed wrapper properties rather
+      # than hardcoded here. Hardcoding it meant a Dependabot wrapper bump was
+      # silently reverted by the regen below, so the new Gradle version was
+      # never actually exercised by CI.
+      - name: Resolve Gradle version from wrapper
+        id: gradle-ver
+        if: matrix.lang == 'java' || matrix.lang == 'kotlin'
+        env:
+          SDK_PATH: ${{ matrix.sdk-path }}
+        run: |
+          set -euo pipefail
+          # distributionUrl=...\://services.gradle.org/.../gradle-9.8.1-bin.zip
+          archive=$(sed -n 's/^distributionUrl=.*\/\(gradle-[^/]*\.zip\)$/\1/p' \
+                      "${SDK_PATH}/gradle/wrapper/gradle-wrapper.properties")
+          if [ -z "$archive" ]; then
+            echo "::error::Could not parse distributionUrl in ${SDK_PATH}/gradle/wrapper/gradle-wrapper.properties"
+            exit 1
+          fi
+          stem=${archive%.zip}            # gradle-9.8.1-bin
+          version=${stem#gradle-}         # 9.8.1-bin
+          version=${version%-*}           # 9.8.1
+          dist_type=${stem##*-}           # bin | all
+          echo "Wrapper requests Gradle ${version} (${dist_type})"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "dist-type=${dist_type}" >> "$GITHUB_OUTPUT"
+
       - name: Regenerate Gradle wrapper launcher
         if: matrix.lang == 'java' || matrix.lang == 'kotlin'
         run: |
           cd "${{ matrix.sdk-path }}"
           gradle wrapper \
-            --gradle-version "${{ matrix.gradle-version }}" \
-            --distribution-type "${{ matrix.gradle-distribution-type }}"
+            --gradle-version "${{ steps.gradle-ver.outputs.version }}" \
+            --distribution-type "${{ steps.gradle-ver.outputs.dist-type }}"
 
       - name: Validate Gradle wrapper checksum
         if: matrix.lang == 'java' || matrix.lang == 'kotlin'
