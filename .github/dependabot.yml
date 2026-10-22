@@ -15,25 +15,32 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 2
-
-    # Bundle all minor/patch bumps into one weekly PR, and all major bumps
-    # into a second weekly PR, instead of one PR per package. Security
-    # updates are left ungrouped so they are never delayed behind a
-    # resolver conflict in either batch.
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      python-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       python-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       python-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "major"
-
-    # Ignore problematic updates
     ignore:
       # Don't update major versions automatically for critical tools
       - dependency-name: "black"
@@ -59,14 +66,25 @@ updates:
       prefix: "ci"
       include: "scope"
     open-pull-requests-limit: 2
+    cooldown:
+      default-days: 7
     groups:
+      github-actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       github-actions-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       github-actions-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
@@ -87,14 +105,28 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 2
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      go-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       go-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       go-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
@@ -118,15 +150,30 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
     groups:
-      docker-all:
+      docker-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      docker-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      docker-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "major"
-          - "minor"
-          - "patch"
 
   # Java SDK dependencies (Gradle)
   - package-ecosystem: "gradle"
@@ -143,19 +190,28 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 2
-
-    # Split minor/patch from major, matching the uv and npm ecosystems above.
-    # A single all-update-types group meant one breaking major (Kotlin 1.9→2.x,
-    # OkHttp 4→5, JUnit 5→6) blocked a dozen harmless bumps in the same PR, and
-    # the *-minor-patch- branch name is what dependabot-automerge.yml matches.
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      java-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       java-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       java-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
@@ -176,18 +232,50 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 2
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      kotlin-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       kotlin-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       kotlin-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "major"
+    ignore:
+      # coroutines 1.11 is built with Kotlin 2.2; the build pins Kotlin 1.9.
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-test"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "com.squareup.okhttp3:okhttp"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.squareup.okhttp3:logging-interceptor"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.squareup.okhttp3:mockwebserver"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.junit:junit-bom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jvm"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gradle-wrapper"
+        update-types: ["version-update:semver-major"]
 
   # C# SDK dependencies (NuGet)
   - package-ecosystem: "nuget"
@@ -207,15 +295,29 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      csharp-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       csharp-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       csharp-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
@@ -236,14 +338,28 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 2
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
+      typescript-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
       typescript-minor-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
       typescript-major:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
