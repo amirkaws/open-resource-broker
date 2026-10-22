@@ -10,10 +10,12 @@ ARG PYTHON_VERSION=3.13
 ARG PACKAGE_NAME_SHORT=orb
 
 # Apply all available security patches and upgrade Python toolchain
+# Unpinned: Debian drops superseded package versions, so exact pins break builds.
+# hadolint ignore=DL3008
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-        ca-certificates=20250419 && \
+        ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip "setuptools>=78.1.1" wheel
