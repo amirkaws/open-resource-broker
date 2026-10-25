@@ -40,7 +40,7 @@ ext {
     // for annotations and 404s for the rest. The BOM is the only coordinate
     // with a single release line, which is what keeps Dependabot's bump of
     // this property resolvable.
-    jackson_version = '2.22.3'
+    jackson_version = '2.22.4'
     awssdk_version = '2.56.0'
     // Drives the junit-bom platform below, never an individual coordinate.
     junit_version = '6.1.3'
